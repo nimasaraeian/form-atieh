@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>پاک کردن داده‌ها</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2a1a1f 100%);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            background: #252525;
+            padding: 40px;
+            border-radius: 20px;
+            border: 2px solid #8B1538;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            max-width: 500px;
+        }
+        h1 {
+            color: #ffffff;
+            margin-bottom: 30px;
+        }
+        .status {
+            padding: 20px;
+            background: #1a1a1a;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-size: 1.1rem;
+        }
+        .success {
+            color: #28a745;
+        }
+        button {
+            background: linear-gradient(135deg, #8B1538 0%, #a01d45 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(139, 21, 56, 0.6);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧹 پاک کردن تمام داده‌ها</h1>
+        <div id="status" class="status">
+            در حال پاک کردن...
+        </div>
+        <button onclick="window.location.href='index.html'">بازگشت به صفحه اصلی</button>
+    </div>
+
+    <script>
+        // پاک کردن تمام داده‌ها از localStorage
+        try {
+            localStorage.removeItem('persons');
+            localStorage.removeItem('paymentTypes');
+            localStorage.removeItem('treatments');
+            localStorage.removeItem('doctors');
+            localStorage.removeItem('currentUser');
+            localStorage.removeItem('admin_authenticated');
+            
+            document.getElementById('status').innerHTML = '✅ <strong>موفق!</strong><br>همه داده‌ها با موفقیت پاک شدند.';
+            document.getElementById('status').classList.add('success');
+        } catch (error) {
+            document.getElementById('status').innerHTML = '❌ خطا: ' + error.message;
+        }
+    </script>
+</body>
+</html>
+

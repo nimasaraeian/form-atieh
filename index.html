@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>آتیه - سیستم مدیریت</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- صفحه اسپلش با لوگو -->
+    <div id="splash" class="splash-screen">
+        <div class="logo-container">
+            <div class="logo-graphic">
+                <img src="public/5a43bc451e674e22a942e3a047e554fb-gfd (1).png" alt="لوگوی آتیه" class="logo-image">
+            </div>
+        </div>
+    </div>
+
+    <!-- صفحه اصلی -->
+    <div id="mainApp" class="main-app hidden">
+        <div class="container">
+            <!-- منوی رستورانی -->
+            <nav class="restaurant-menu">
+                <div class="menu-category active" data-section="person">
+                    <div class="menu-item-content">
+                        <span class="menu-icon">👤</span>
+                        <h3 class="menu-title">ثبت نام شخص</h3>
+                        <p class="menu-description">ثبت نام و نام خانوادگی شخصی که فرم را پر می‌کند</p>
+                    </div>
+                </div>
+
+                <div class="menu-category" data-section="payment">
+                    <div class="menu-item-content">
+                        <span class="menu-icon">💳</span>
+                        <h3 class="menu-title">انواع پرداخت</h3>
+                        <p class="menu-description">ثبت و مدیریت روش‌های پرداخت</p>
+                    </div>
+                </div>
+
+                <div class="menu-category" data-section="treatment">
+                    <div class="menu-item-content">
+                        <span class="menu-icon">🦷</span>
+                        <h3 class="menu-title">انواع درمان دندانپزشکی</h3>
+                        <p class="menu-description">ثبت درمان‌ها از پرسودترین تا کم‌سودترین</p>
+                    </div>
+                </div>
+
+                <div class="menu-category" data-section="doctor">
+                    <div class="menu-item-content">
+                        <span class="menu-icon">👨‍⚕️</span>
+                        <h3 class="menu-title">نام دکتر</h3>
+                        <p class="menu-description">ثبت نام پزشک</p>
+                    </div>
+                </div>
+
+                <div class="menu-category admin-menu" data-section="admin">
+                    <div class="menu-item-content">
+                        <span class="menu-icon">🔐</span>
+                        <h3 class="menu-title">پنل ادمین</h3>
+                        <p class="menu-description">مشاهده و مدیریت تمام اطلاعات</p>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- محتوای فرم‌ها -->
+            <div class="content-wrapper">
+                <!-- بخش ثبت نام شخص -->
+                <section id="person" class="content-section active">
+                    <div class="section-header">
+                        <h2>فرم ثبت نام شخص</h2>
+                    </div>
+                    
+                    <div class="form-wrapper">
+                        <form id="personForm" class="custom-form">
+                            <div class="form-group">
+                                <label for="personFirstName">نام:</label>
+                                <input type="text" id="personFirstName" name="personFirstName" placeholder="نام را وارد کنید" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="personLastName">نام خانوادگی:</label>
+                                <input type="text" id="personLastName" name="personLastName" placeholder="نام خانوادگی را وارد کنید" required>
+                            </div>
+
+                            <button type="submit" class="btn-primary">ثبت نام شخص</button>
+                        </form>
+
+                        <div class="list-container">
+                            <h3>اشخاص ثبت شده:</h3>
+                            <ul id="personList" class="item-list">
+                                <!-- آیتم‌های شخص اینجا نمایش داده می‌شوند -->
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- بخش انواع پرداخت -->
+                <section id="payment" class="content-section">
+                    <!-- پروفایل کاربر -->
+                    <div id="paymentProfile" class="user-profile" style="display: none;">
+                        <div class="profile-content">
+                            <div class="profile-avatar">👤</div>
+                            <div class="profile-info">
+                                <div class="profile-name"></div>
+                                <div class="profile-subtitle">پروفایل شما</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="section-header">
+                        <h2>فرم ثبت انواع پرداخت</h2>
+                    </div>
+                    
+                    <div class="form-wrapper">
+                        <form id="paymentForm" class="custom-form">
+                            <div class="form-group">
+                                <label for="paymentType">درج نوع پرداخت:</label>
+                                <input type="text" id="paymentType" name="paymentType" placeholder="مثال: نقدی، کارت بانکی، بیمه تأمین اجتماعی و..." required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="paymentScore">امتیاز (از 1 تا 10):</label>
+                                <input type="number" id="paymentScore" name="paymentScore" min="1" max="10" placeholder="امتیاز را وارد کنید (1 تا 10)" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="paymentDescription">توضیحات:</label>
+                                <textarea id="paymentDescription" name="paymentDescription" rows="3" placeholder="توضیحات اضافی..."></textarea>
+                            </div>
+
+                            <button type="submit" class="btn-primary">ثبت نوع پرداخت</button>
+                        </form>
+
+                        <div class="list-container">
+                            <h3>روش‌های پرداخت ثبت شده:</h3>
+                            <ul id="paymentList" class="item-list">
+                                <!-- آیتم‌های پرداخت اینجا نمایش داده می‌شوند -->
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- بخش انواع درمان دندانپزشکی -->
+                <section id="treatment" class="content-section">
+                    <!-- پروفایل کاربر -->
+                    <div id="treatmentProfile" class="user-profile" style="display: none;">
+                        <div class="profile-content">
+                            <div class="profile-avatar">👤</div>
+                            <div class="profile-info">
+                                <div class="profile-name"></div>
+                                <div class="profile-subtitle">پروفایل شما</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="section-header">
+                        <h2>فرم ثبت انواع درمان دندانپزشکی</h2>
+                    </div>
+                    
+                    <div class="form-wrapper">
+                        <form id="treatmentForm" class="custom-form">
+                            <div class="form-group">
+                                <label for="treatmentName">نام درمان:</label>
+                                <input type="text" id="treatmentName" name="treatmentName" placeholder="مثال: ایمپلنت" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="profitability">سطح سودآوری:</label>
+                                <select id="profitability" name="profitability" required>
+                                    <option value="">-- انتخاب سطح سودآوری --</option>
+                                    <option value="very-high">خیلی پرسود</option>
+                                    <option value="high">پرسود</option>
+                                    <option value="medium">متوسط</option>
+                                    <option value="low">کم‌سود</option>
+                                    <option value="very-low">خیلی کم‌سود</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="treatmentCost">هزینه تقریبی (تومان):</label>
+                                <input type="number" id="treatmentCost" name="treatmentCost" placeholder="مثال: 5000000" min="0">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="treatmentDescription">توضیحات:</label>
+                                <textarea id="treatmentDescription" name="treatmentDescription" rows="3" placeholder="توضیحات درمان..."></textarea>
+                            </div>
+
+                            <button type="submit" class="btn-primary">ثبت درمان</button>
+                        </form>
+
+                        <div class="list-container">
+                            <h3>درمان‌های ثبت شده (مرتب شده از پرسودترین به کم‌سودترین):</h3>
+                            <ul id="treatmentList" class="item-list">
+                                <!-- آیتم‌های درمان اینجا نمایش داده می‌شوند -->
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- بخش نام دکتر -->
+                <section id="doctor" class="content-section">
+                    <!-- پروفایل کاربر -->
+                    <div id="doctorProfile" class="user-profile" style="display: none;">
+                        <div class="profile-content">
+                            <div class="profile-avatar">👤</div>
+                            <div class="profile-info">
+                                <div class="profile-name"></div>
+                                <div class="profile-subtitle">پروفایل شما</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="section-header">
+                        <h2>فرم ثبت نام دکتر</h2>
+                    </div>
+                    
+                    <div class="form-wrapper">
+                        <form id="doctorForm" class="custom-form">
+                            <div class="form-group">
+                                <label for="doctorName">نام پزشک:</label>
+                                <input type="text" id="doctorName" name="doctorName" placeholder="نام پزشک را وارد کنید" required>
+                            </div>
+
+                            <button type="submit" class="btn-primary">ثبت نام پزشک</button>
+                        </form>
+
+                        <div class="list-container">
+                            <h3>پزشکان ثبت شده:</h3>
+                            <ul id="doctorList" class="item-list">
+                                <!-- آیتم‌های پزشک اینجا نمایش داده می‌شوند -->
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- پنل ادمین -->
+                <section id="admin" class="content-section">
+                    <div class="section-header">
+                        <h2>پنل مدیریت ادمین</h2>
+                        <p style="color: #ffc107; margin-top: 10px; font-size: 0.95rem;">⚠️ توجه: این داده‌ها فقط از localStorage مرورگر شما نمایش داده می‌شوند</p>
+                        <div class="admin-actions" style="margin-top: 20px;">
+                            <button onclick="exportAllData()" class="btn-export">📥 دانلود تمام داده‌ها (JSON)</button>
+                            <button onclick="clearAllData()" class="btn-clear">🗑️ پاک کردن همه داده‌ها</button>
+                            <button onclick="logoutAdmin()" class="btn-logout" style="background: linear-gradient(135deg, #6c757d, #5a6268);">🚪 خروج از پنل ادمین</button>
+                        </div>
+                    </div>
+                    
+                    <div class="admin-dashboard">
+                        <!-- آمار کلی -->
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-icon">👤</div>
+                                <div class="stat-value" id="personsCount">0</div>
+                                <div class="stat-label">اشخاص ثبت شده</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon">💳</div>
+                                <div class="stat-value" id="paymentsCount">0</div>
+                                <div class="stat-label">انواع پرداخت</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon">🦷</div>
+                                <div class="stat-value" id="treatmentsCount">0</div>
+                                <div class="stat-label">درمان‌ها</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon">👨‍⚕️</div>
+                                <div class="stat-value" id="doctorsCount">0</div>
+                                <div class="stat-label">پزشکان</div>
+                            </div>
+                        </div>
+
+                        <!-- تمام اطلاعات -->
+                        <div class="admin-sections">
+                            <div class="admin-section">
+                                <h3>👤 اشخاص ثبت شده</h3>
+                                <div id="adminPersonsList" class="admin-list"></div>
+                            </div>
+
+                            <div class="admin-section">
+                                <h3>💳 انواع پرداخت</h3>
+                                <div id="adminPaymentsList" class="admin-list"></div>
+                            </div>
+
+                            <div class="admin-section">
+                                <h3>🦷 درمان‌های دندانپزشکی</h3>
+                                <div id="adminTreatmentsList" class="admin-list"></div>
+                            </div>
+
+                            <div class="admin-section">
+                                <h3>👨‍⚕️ پزشکان</h3>
+                                <div id="adminDoctorsList" class="admin-list"></div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <!-- مودال ورود ادمین -->
+    <div id="adminLoginModal" class="admin-login-modal" style="display: none;">
+        <div class="admin-login-content">
+            <h2>🔐 ورود به پنل ادمین</h2>
+            <input type="password" id="adminPasswordInput" placeholder="رمز عبور ادمین را وارد کنید" autocomplete="off">
+            <div class="admin-login-buttons">
+                <button id="adminLoginBtn" class="btn-admin-login">ورود</button>
+                <button id="adminCancelBtn" class="btn-admin-cancel">انصراف</button>
+            </div>
+            <div id="adminLoginError" class="admin-login-error"></div>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

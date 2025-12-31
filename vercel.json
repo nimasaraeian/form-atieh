@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "name": "form-atiyeh",
+  "buildCommand": null,
+  "outputDirectory": ".",
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ]
+}
