@@ -363,6 +363,10 @@ function renderPaymentTypesChart() {
             }
         }
     });
+    } catch (error) {
+        console.error('Error rendering payment types chart:', error);
+        ctx.parentElement.innerHTML = '<p class="no-data">خطا در نمایش نمودار: ' + error.message + '</p>';
+    }
 }
 
 // Render treatment profitability bar chart
