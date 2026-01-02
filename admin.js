@@ -24,6 +24,8 @@ function initializeDashboard() {
     loadData();
     renderDashboard();
     setupExportButton();
+    setupRefreshButton();
+    setupDebugPanel();
 }
 
 // Wait for both DOM and Chart.js to be ready
@@ -689,6 +691,108 @@ function setupExportButton() {
         exportBtn.addEventListener('click', exportToCSV);
     }
 }
+
+// Setup refresh button
+function setupRefreshButton() {
+    const refreshBtn = document.getElementById('refreshDataBtn');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', () => {
+            console.log('🔄 Refreshing data...');
+            loadData();
+            renderDashboard();
+            alert('داده‌ها به‌روزرسانی شدند!');
+        });
+    }
+}
+
+// Setup debug panel
+function setupDebugPanel() {
+    // Add debug button to header
+    const headerActions = document.querySelector('.header-actions');
+    if (headerActions) {
+        const debugBtn = document.createElement('button');
+        debugBtn.textContent = '🔍 دیباگ';
+        debugBtn.className = 'btn-debug';
+        debugBtn.style.cssText = 'padding: 12px 24px; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; background: #6c757d; color: white;';
+        debugBtn.addEventListener('click', showDebugInfo);
+        headerActions.insertBefore(debugBtn, headerActions.firstChild);
+    }
+}
+
+// Show debug information
+function showDebugInfo() {
+    const panel = document.getElementById('debugPanel');
+    const content = document.getElementById('debugContent');
+    
+    if (!panel || !content) return;
+    
+    // Get all localStorage data
+    const personsData = localStorage.getItem('persons');
+    const paymentsData = localStorage.getItem('paymentTypes');
+    const treatmentsData = localStorage.getItem('treatments');
+    
+    const debugInfo = {
+        'localStorage Keys': Object.keys(localStorage),
+        'Persons (raw)': personsData ? JSON.parse(personsData) : 'null',
+        'Payments (raw)': paymentsData ? JSON.parse(paymentsData) : 'null',
+        'Treatments (raw)': treatmentsData ? JSON.parse(treatmentsData) : 'null',
+        'Processed Patients': patients,
+        'Processed Payments': payments,
+        'Processed Treatments': treatments,
+        'Patients Count': patients.length,
+        'Payments Count': payments.length,
+        'Treatments Count': treatments.length
+    };
+    
+    content.innerHTML = `
+        <pre style="background: #f8f9fa; padding: 15px; border-radius: 5px; overflow: auto; max-height: 400px; direction: ltr; text-align: left;">${JSON.stringify(debugInfo, null, 2)}</pre>
+        <div style="margin-top: 15px;">
+            <button onclick="clearLocalStorage()" style="padding: 8px 16px; background: #dc3545; color: white; border: none; border-radius: 5px; cursor: pointer; margin-right: 10px;">پاک کردن localStorage</button>
+            <button onclick="addTestData()" style="padding: 8px 16px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer;">اضافه کردن داده تست</button>
+        </div>
+    `;
+    
+    panel.style.display = 'block';
+}
+
+// Clear localStorage (for testing) - make it global
+window.clearLocalStorage = function() {
+    if (confirm('آیا مطمئن هستید که می‌خواهید تمام داده‌های localStorage را پاک کنید؟')) {
+        localStorage.clear();
+        alert('localStorage پاک شد. صفحه را رفرش کنید.');
+        location.reload();
+    }
+};
+
+// Add test data - make it global
+window.addTestData = function() {
+    const testPersons = [
+        { id: 1, firstName: 'علی', lastName: 'احمدی', createdAt: new Date().toLocaleString('fa-IR') },
+        { id: 2, firstName: 'مریم', lastName: 'رضایی', createdAt: new Date().toLocaleString('fa-IR') }
+    ];
+    
+    const testPayments = [
+        { id: 1, personId: 1, type: 'نقدی', score: 9, description: 'پرداخت نقدی', createdAt: new Date().toLocaleString('fa-IR') },
+        { id: 2, personId: 1, type: 'کارت بانکی', score: 8, description: 'پرداخت با کارت', createdAt: new Date().toLocaleString('fa-IR') },
+        { id: 3, personId: 2, type: 'بیمه', score: 7, description: 'پرداخت با بیمه', createdAt: new Date().toLocaleString('fa-IR') }
+    ];
+    
+    const testTreatments = [
+        { id: 1, personId: 1, name: 'ایمپلنت', profitability: 'very-high', cost: 5000000, description: 'ایمپلنت دندان', createdAt: new Date().toLocaleString('fa-IR') },
+        { id: 2, personId: 1, name: 'جرمگیری', profitability: 'medium', cost: 500000, description: 'جرمگیری دندان', createdAt: new Date().toLocaleString('fa-IR') },
+        { id: 3, personId: 2, name: 'لمینت', profitability: 'high', cost: 3000000, description: 'لمینت دندان', createdAt: new Date().toLocaleString('fa-IR') }
+    ];
+    
+    localStorage.setItem('persons', JSON.stringify(testPersons));
+    localStorage.setItem('paymentTypes', JSON.stringify(testPayments));
+    localStorage.setItem('treatments', JSON.stringify(testTreatments));
+    
+    alert('داده‌های تست اضافه شدند! در حال به‌روزرسانی...');
+    loadData();
+    renderDashboard();
+    const panel = document.getElementById('debugPanel');
+    if (panel) panel.style.display = 'none';
+};
 
 // Utility: Generate colors for charts
 function generateColors(count) {

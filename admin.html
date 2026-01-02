@@ -22,9 +22,17 @@
             <h1>پنل مدیریت ادمین</h1>
             <div class="header-actions">
                 <a href="index.html" class="btn-back">بازگشت به صفحه اصلی</a>
+                <button id="refreshDataBtn" class="btn-refresh-data">🔄 به‌روزرسانی داده‌ها</button>
                 <button id="exportCSVBtn" class="btn-export-csv">دانلود CSV</button>
             </div>
         </header>
+        
+        <!-- Debug Info Panel -->
+        <div id="debugPanel" class="debug-panel" style="display: none;">
+            <h3>اطلاعات دیباگ</h3>
+            <div id="debugContent"></div>
+            <button onclick="document.getElementById('debugPanel').style.display='none'" class="btn-close-debug">بستن</button>
+        </div>
 
         <main class="admin-main">
             <!-- Summary Cards -->
