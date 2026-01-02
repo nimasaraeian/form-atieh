@@ -11,7 +11,7 @@
     <div id="splash" class="splash-screen">
         <div class="logo-container">
             <div class="logo-graphic">
-                <img src="public/5a43bc451e674e22a942e3a047e554fb-gfd (1).png" alt="لوگوی آتیه" class="logo-image">
+                <img src="5a43bc451e674e22a942e3a047e554fb-gfd (1).png" alt="لوگوی آتیه" class="logo-image">
             </div>
         </div>
     </div>
@@ -20,7 +20,7 @@
     <div id="mainApp" class="main-app hidden">
         <div class="container">
             <!-- منوی رستورانی -->
-            <nav class="restaurant-menu">
+            <nav class="restaurant-menu" style="display: grid !important; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important; gap: 25px !important; width: 100% !important;">
                 <div class="menu-category active" data-section="person">
                     <div class="menu-item-content">
                         <span class="menu-icon">👤</span>
@@ -61,6 +61,13 @@
                     </div>
                 </div>
             </nav>
+
+            <!-- دکمه پنل ادمین -->
+            <div style="text-align: center; margin-bottom: 30px;">
+                <a href="admin.html" class="admin-panel-link">
+                    پنل ادمین - گزارش‌ها و نمودارها
+                </a>
+            </div>
 
             <!-- محتوای فرم‌ها -->
             <div class="content-wrapper">
@@ -238,8 +245,11 @@
                 <section id="admin" class="content-section">
                     <div class="section-header">
                         <h2>پنل مدیریت ادمین</h2>
-                        <p style="color: #ffc107; margin-top: 10px; font-size: 0.95rem;">⚠️ توجه: این داده‌ها فقط از localStorage مرورگر شما نمایش داده می‌شوند</p>
+                        <p id="adminSyncStatus" style="color: #17a2b8; margin-top: 10px; font-size: 0.95rem;">
+                            🔄 در حال همگام‌سازی با cloud...
+                        </p>
                         <div class="admin-actions" style="margin-top: 20px;">
+                            <button onclick="refreshAdminData()" class="btn-refresh" style="background: linear-gradient(135deg, #17a2b8, #138496);">🔄 به‌روزرسانی داده‌ها</button>
                             <button onclick="exportAllData()" class="btn-export">📥 دانلود تمام داده‌ها (JSON)</button>
                             <button onclick="clearAllData()" class="btn-clear">🗑️ پاک کردن همه داده‌ها</button>
                             <button onclick="logoutAdmin()" class="btn-logout" style="background: linear-gradient(135deg, #6c757d, #5a6268);">🚪 خروج از پنل ادمین</button>

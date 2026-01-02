@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>پنل مدیریت - آتیه</title>
+    <link rel="stylesheet" href="admin.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <div class="admin-container">
+        <header class="admin-header">
+            <h1>پنل مدیریت ادمین</h1>
+            <div class="header-actions">
+                <a href="index.html" class="btn-back">بازگشت به صفحه اصلی</a>
+                <button id="exportCSVBtn" class="btn-export-csv">دانلود CSV</button>
+            </div>
+        </header>
+
+        <main class="admin-main">
+            <!-- Summary Cards -->
+            <section class="summary-cards">
+                <div class="summary-card">
+                    <div class="card-icon">👥</div>
+                    <div class="card-content">
+                        <div class="card-value" id="totalUsers">0</div>
+                        <div class="card-label">کاربران ثبت شده</div>
+                    </div>
+                </div>
+
+                <div class="summary-card">
+                    <div class="card-icon">⭐</div>
+                    <div class="card-content">
+                        <div class="card-value" id="avgPaymentScore">0</div>
+                        <div class="card-label">میانگین امتیاز پرداخت</div>
+                    </div>
+                </div>
+
+                <div class="summary-card">
+                    <div class="card-icon">💰</div>
+                    <div class="card-content">
+                        <div class="card-value" id="topTreatment">-</div>
+                        <div class="card-label">پرسودترین درمان</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Payment Types Report -->
+            <section class="report-section">
+                <div class="section-header">
+                    <h2>گزارش انواع پرداخت</h2>
+                </div>
+                <div class="section-content">
+                    <div class="chart-container">
+                        <canvas id="paymentTypesChart"></canvas>
+                    </div>
+                    <div class="report-table">
+                        <table id="paymentTypesTable">
+                            <thead>
+                                <tr>
+                                    <th>نوع پرداخت</th>
+                                    <th>تعداد</th>
+                                    <th>میانگین امتیاز</th>
+                                </tr>
+                            </thead>
+                            <tbody id="paymentTypesTableBody">
+                                <!-- Populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Treatment Profitability Report -->
+            <section class="report-section">
+                <div class="section-header">
+                    <h2>گزارش سودآوری درمان‌ها</h2>
+                </div>
+                <div class="section-content">
+                    <div class="chart-container">
+                        <canvas id="treatmentProfitabilityChart"></canvas>
+                    </div>
+                    <div class="report-table">
+                        <table id="treatmentsTable">
+                            <thead>
+                                <tr>
+                                    <th>نام درمان</th>
+                                    <th>سطح سودآوری</th>
+                                    <th>هزینه (تومان)</th>
+                                    <th>تعداد</th>
+                                </tr>
+                            </thead>
+                            <tbody id="treatmentsTableBody">
+                                <!-- Populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Daily Registrations Chart (Optional) -->
+            <section class="report-section">
+                <div class="section-header">
+                    <h2>ثبت‌نام‌های روزانه</h2>
+                </div>
+                <div class="section-content">
+                    <div class="chart-container">
+                        <canvas id="dailyRegistrationsChart"></canvas>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="admin.js"></script>
+</body>
+</html>
+
