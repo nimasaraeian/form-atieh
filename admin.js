@@ -209,7 +209,8 @@ function countPaymentTypes() {
             : '0'
     }));
 
-    return result.sort((a, b) => b.count - a.count);
+    // Sort by average score from high to low (not by count)
+    return result.sort((a, b) => parseFloat(b.avgScore) - parseFloat(a.avgScore));
 }
 
 // Calculate treatment profitability ranking

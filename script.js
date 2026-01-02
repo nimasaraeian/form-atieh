@@ -39,15 +39,239 @@ function checkAdminPassword(password) {
     return password === 'admin123'; // ⚠️ این را در config.js تغییر دهید!
 }
 
-// مدیریت ذخیره‌سازی در JSONBin.io
-// ذخیره داده‌ها در JSONBin.io
-async function saveToJSONBin(data) {
-    if (!JSONBIN_API_KEY || !JSONBIN_BIN_ID) {
+// دریافت Bin ID از Registry (یک Bin جداگانه که Bin ID اصلی را نگه می‌دارد)
+async function getBinIdFromRegistry() {
+    if (!JSONBIN_API_KEY) {
+        return null;
+    }
+    
+    // استفاده از یک Bin ID ثابت برای Registry (این باید در config.js تنظیم شود)
+    // اما برای شروع، از localStorage استفاده می‌کنیم
+    const registryBinId = localStorage.getItem('registry_bin_id');
+    if (!registryBinId) {
+        return null;
+    }
+    
+    try {
+        const response = await fetch(`https://api.jsonbin.io/v3/b/${registryBinId}/latest`, {
+            method: 'GET',
+            headers: {
+                'X-Master-Key': JSONBIN_API_KEY
+            }
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            const binId = result.record?.binId;
+            if (binId) {
+                console.log('✅ Bin ID از Registry دریافت شد:', binId);
+                return binId;
+            }
+        }
+        return null;
+    } catch (error) {
+        return null;
+    }
+}
+
+// ذخیره Bin ID در Registry
+async function saveBinIdToRegistry(binId) {
+    if (!JSONBIN_API_KEY) {
         return false;
+    }
+    
+    // دریافت یا ایجاد Registry Bin
+    let registryBinId = localStorage.getItem('registry_bin_id');
+    
+    if (!registryBinId) {
+        // ایجاد Registry Bin
+        try {
+            const createResponse = await fetch('https://api.jsonbin.io/v3/b', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Master-Key': JSONBIN_API_KEY,
+                    'X-Bin-Name': 'atiyeh-registry'
+                },
+                body: JSON.stringify({ binId: binId })
+            });
+            
+            if (createResponse.ok) {
+                const result = await createResponse.json();
+                registryBinId = result.metadata?.id;
+                if (registryBinId) {
+                    localStorage.setItem('registry_bin_id', registryBinId);
+                    console.log('✅ Registry Bin ایجاد شد:', registryBinId);
+                    return true;
+                }
+            }
+        } catch (error) {
+            console.error('خطا در ایجاد Registry Bin:', error);
+            return false;
+        }
+    } else {
+        // به‌روزرسانی Registry Bin
+        try {
+            const response = await fetch(`https://api.jsonbin.io/v3/b/${registryBinId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Master-Key': JSONBIN_API_KEY
+                },
+                body: JSON.stringify({ binId: binId })
+            });
+            
+            if (response.ok) {
+                console.log('✅ Bin ID در Registry ذخیره شد');
+                return true;
+            }
+        } catch (error) {
+            console.error('خطا در ذخیره Bin ID در Registry:', error);
+            return false;
+        }
+    }
+    
+    return false;
+}
+
+// ایجاد Bin جدید در JSONBin.io
+async function createJSONBin(data) {
+    if (!JSONBIN_API_KEY) {
+        return null;
     }
 
     try {
-        const response = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`, {
+        const response = await fetch('https://api.jsonbin.io/v3/b', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Master-Key': JSONBIN_API_KEY,
+                'X-Bin-Name': 'atiyeh-form-data'
+            },
+            body: JSON.stringify(data)
+        });
+
+        if (response.ok) {
+            const result = await response.json();
+            const binId = result.metadata?.id;
+            if (binId) {
+                // ذخیره Bin ID در Registry (برای استفاده همه دستگاه‌ها)
+                await saveBinIdToRegistry(binId);
+                // همچنین در localStorage هم ذخیره کن (برای fallback)
+                localStorage.setItem('jsonbin_bin_id', binId);
+                console.log('✅ Bin ایجاد شد:', binId);
+                console.log('⚠️⚠️⚠️ مهم: لطفاً این Bin ID را در فایل config.js وارد کنید:');
+                console.log('const JSONBIN_BIN_ID = \'' + binId + '\';');
+                console.log('✅ Bin ID در Registry ذخیره شد - همه دستگاه‌ها از این Bin استفاده می‌کنند');
+                // نمایش یک alert هم برای کاربر
+                alert('⚠️ مهم!\n\nBin ID ایجاد شد: ' + binId + '\n\nلطفاً این Bin ID را در فایل config.js وارد کنید:\n\nconst JSONBIN_BIN_ID = \'' + binId + '\';\n\nسپس دوباره deploy کنید.');
+                return binId;
+            }
+        } else {
+            const errorText = await response.text();
+            console.error('❌ خطا در ایجاد Bin:', response.status, errorText);
+        }
+        return null;
+    } catch (error) {
+        console.error('خطا در ایجاد Bin:', error);
+        return null;
+    }
+}
+
+// ادغام داده‌های جدید با داده‌های موجود
+function mergeData(existingData, newData) {
+    // ادغام اشخاص (بر اساس ID)
+    const mergedPersons = [...(existingData.persons || [])];
+    newData.persons.forEach(newPerson => {
+        const existingIndex = mergedPersons.findIndex(p => p.id === newPerson.id);
+        if (existingIndex >= 0) {
+            mergedPersons[existingIndex] = newPerson; // به‌روزرسانی
+        } else {
+            mergedPersons.push(newPerson); // اضافه کردن
+        }
+    });
+    
+    // ادغام پرداخت‌ها
+    const mergedPayments = [...(existingData.paymentTypes || [])];
+    newData.paymentTypes.forEach(newPayment => {
+        const existingIndex = mergedPayments.findIndex(p => p.id === newPayment.id);
+        if (existingIndex >= 0) {
+            mergedPayments[existingIndex] = newPayment;
+        } else {
+            mergedPayments.push(newPayment);
+        }
+    });
+    
+    // ادغام درمان‌ها
+    const mergedTreatments = [...(existingData.treatments || [])];
+    newData.treatments.forEach(newTreatment => {
+        const existingIndex = mergedTreatments.findIndex(t => t.id === newTreatment.id);
+        if (existingIndex >= 0) {
+            mergedTreatments[existingIndex] = newTreatment;
+        } else {
+            mergedTreatments.push(newTreatment);
+        }
+    });
+    
+    // ادغام پزشکان
+    const mergedDoctors = [...(existingData.doctors || [])];
+    newData.doctors.forEach(newDoctor => {
+        const existingIndex = mergedDoctors.findIndex(d => d.id === newDoctor.id);
+        if (existingIndex >= 0) {
+            mergedDoctors[existingIndex] = newDoctor;
+        } else {
+            mergedDoctors.push(newDoctor);
+        }
+    });
+    
+    return {
+        persons: mergedPersons,
+        paymentTypes: mergedPayments,
+        treatments: mergedTreatments,
+        doctors: mergedDoctors
+    };
+}
+
+// ذخیره داده‌ها در JSONBin.io
+async function saveToJSONBin(data, skipMerge = false) {
+    if (!JSONBIN_API_KEY) {
+        return false;
+    }
+
+    // دریافت Bin ID از config، Registry، یا localStorage
+    let binId = JSONBIN_BIN_ID;
+    
+    // اگر Bin ID در config نیست، از Registry بگیر
+    if (!binId) {
+        binId = await getBinIdFromRegistry();
+    }
+    
+    // اگر هنوز Bin ID وجود ندارد، از localStorage بگیر
+    if (!binId) {
+        binId = localStorage.getItem('jsonbin_bin_id');
+    }
+    
+    // اگر هنوز Bin ID وجود ندارد، یک Bin جدید ایجاد کن
+    if (!binId) {
+        console.log('ℹ️ Bin ID وجود ندارد، در حال ایجاد Bin جدید...');
+        binId = await createJSONBin(data);
+        if (!binId) {
+            console.error('❌ خطا در ایجاد Bin');
+            return false;
+        }
+    } else if (!skipMerge) {
+        // اگر Bin وجود دارد و skipMerge false است، ابتدا داده‌های موجود را بخوان و با داده‌های جدید ادغام کن
+        const existingData = await loadFromJSONBin();
+        if (existingData) {
+            console.log('✅ داده‌های موجود پیدا شد، در حال ادغام...');
+            data = mergeData(existingData, data);
+        }
+    } else {
+        console.log('⚠️ حالت پاک کردن: داده‌ها بدون ادغام ذخیره می‌شوند');
+    }
+
+    try {
+        const response = await fetch(`https://api.jsonbin.io/v3/b/${binId}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -56,7 +280,34 @@ async function saveToJSONBin(data) {
             body: JSON.stringify(data)
         });
 
-        return response.ok;
+        if (response.ok) {
+            console.log('✅ داده‌ها در JSONBin.io ذخیره شدند');
+            return true;
+        } else if (response.status === 404) {
+            // اگر Bin پیدا نشد، یک Bin جدید ایجاد کن
+            console.log('⚠️ Bin پیدا نشد، در حال ایجاد Bin جدید...');
+            binId = await createJSONBin(data);
+            if (binId) {
+                // بعد از ایجاد Bin، دوباره سعی کن ذخیره کنی
+                const retryResponse = await fetch(`https://api.jsonbin.io/v3/b/${binId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Master-Key': JSONBIN_API_KEY
+                    },
+                    body: JSON.stringify(data)
+                });
+                if (retryResponse.ok) {
+                    console.log('✅ داده‌ها در Bin جدید ذخیره شدند');
+                    return true;
+                }
+            }
+            return false;
+        } else {
+            const errorText = await response.text();
+            console.error('❌ خطا در ذخیره داده در JSONBin:', response.status, errorText);
+            return false;
+        }
     } catch (error) {
         console.error('خطا در ارتباط با JSONBin:', error);
         return false;
@@ -65,12 +316,30 @@ async function saveToJSONBin(data) {
 
 // دریافت داده‌ها از JSONBin.io
 async function loadFromJSONBin() {
-    if (!JSONBIN_API_KEY || !JSONBIN_BIN_ID) {
+    if (!JSONBIN_API_KEY) {
+        return null;
+    }
+
+    // دریافت Bin ID از config، Registry، یا localStorage
+    let binId = JSONBIN_BIN_ID;
+    
+    // اگر Bin ID در config نیست، از Registry بگیر
+    if (!binId) {
+        binId = await getBinIdFromRegistry();
+    }
+    
+    // اگر هنوز Bin ID وجود ندارد، از localStorage بگیر
+    if (!binId) {
+        binId = localStorage.getItem('jsonbin_bin_id');
+    }
+    
+    if (!binId) {
+        console.log('ℹ️ Bin ID وجود ندارد - هنوز Bin ایجاد نشده است');
         return null;
     }
 
     try {
-        const response = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}/latest`, {
+        const response = await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`, {
             method: 'GET',
             headers: {
                 'X-Master-Key': JSONBIN_API_KEY
@@ -90,7 +359,7 @@ async function loadFromJSONBin() {
 
 // بارگذاری داده‌ها از JSONBin.io (برای ادمین)
 async function loadAllDataFromJSONBin() {
-    if (!JSONBIN_API_KEY || !JSONBIN_BIN_ID) {
+    if (!JSONBIN_API_KEY) {
         return false;
     }
 
@@ -166,22 +435,42 @@ document.querySelectorAll('.menu-category').forEach(category => {
         
         // اضافه کردن active به آیتم انتخاب شده
         category.classList.add('active');
-        document.getElementById(sectionId).classList.add('active');
+        const targetSection = document.getElementById(sectionId);
+        if (targetSection) {
+            targetSection.classList.add('active');
+            
+            // اسکرول به فرم (برای موبایل)
+            setTimeout(() => {
+                const contentWrapper = document.querySelector('.content-wrapper');
+                if (contentWrapper) {
+                    contentWrapper.scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'start' 
+                    });
+                }
+            }, 100);
+        }
         
         // اگر بخش ادمین فعال شد، پنل را رندر کن
         if (sectionId === 'admin' && isAdmin) {
             // بارگذاری داده‌ها از JSONBin.io
-            loadAllDataFromJSONBin().then(loaded => {
-                if (loaded) {
-                    renderPersonList();
-                    renderPaymentList();
-                    renderTreatmentList();
-                    renderDoctorList();
+            refreshAdminData();
+            
+            // به‌روزرسانی خودکار هر 10 ثانیه
+            if (window.adminRefreshInterval) {
+                clearInterval(window.adminRefreshInterval);
+            }
+            window.adminRefreshInterval = setInterval(() => {
+                if (document.getElementById('admin').classList.contains('active') && isAdmin) {
+                    refreshAdminData();
                 }
-                renderAdminPanel();
-            }).catch(() => {
-                renderAdminPanel();
-            });
+            }, 10000); // هر 10 ثانیه
+        } else {
+            // اگر بخش ادمین بسته شد، interval را متوقف کن
+            if (window.adminRefreshInterval) {
+                clearInterval(window.adminRefreshInterval);
+                window.adminRefreshInterval = null;
+            }
         }
         
         // به‌روزرسانی select های شخص در بخش فعال
@@ -195,7 +484,7 @@ let currentUser = null;
 // فرم ثبت نام شخص
 const personForm = document.getElementById('personForm');
 if (personForm) {
-    personForm.addEventListener('submit', (e) => {
+    personForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         
         // چک کردن اینکه آیا کاربر قبلاً ثبت نام کرده است
@@ -226,7 +515,7 @@ if (personForm) {
         };
         
         persons.push(personData);
-        savePersons();
+        await savePersons();
         
         // ذخیره کاربر فعلی
         currentUser = {
@@ -319,7 +608,7 @@ function updateCurrentUserDisplay() {
 // فرم انواع پرداخت
 const paymentForm = document.getElementById('paymentForm');
 if (paymentForm) {
-    paymentForm.addEventListener('submit', (e) => {
+    paymentForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         
         if (!currentUser) {
@@ -338,7 +627,7 @@ if (paymentForm) {
         };
         
         paymentTypes.push(paymentData);
-        savePaymentTypes();
+        await savePaymentTypes();
         renderPaymentList();
         paymentForm.reset();
         showNotification('روش پرداخت با موفقیت ثبت شد!', 'success');
@@ -348,7 +637,7 @@ if (paymentForm) {
 // فرم انواع درمان
 const treatmentForm = document.getElementById('treatmentForm');
 if (treatmentForm) {
-    treatmentForm.addEventListener('submit', (e) => {
+    treatmentForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         
         if (!currentUser) {
@@ -368,7 +657,7 @@ if (treatmentForm) {
         };
         
         treatments.push(treatmentData);
-        saveTreatments();
+        await saveTreatments();
         renderTreatmentList();
         treatmentForm.reset();
         showNotification('درمان با موفقیت ثبت شد!', 'success');
@@ -378,7 +667,7 @@ if (treatmentForm) {
 // فرم ثبت نام دکتر
 const doctorForm = document.getElementById('doctorForm');
 if (doctorForm) {
-    doctorForm.addEventListener('submit', (e) => {
+    doctorForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         
         if (!currentUser) {
@@ -395,7 +684,7 @@ if (doctorForm) {
         };
         
         doctors.push(doctorData);
-        saveDoctors();
+        await saveDoctors();
         renderDoctorList();
         doctorForm.reset();
         showNotification('نام پزشک با موفقیت ثبت شد!', 'success');
@@ -673,7 +962,7 @@ function deleteDoctor(id) {
 async function savePaymentTypes() {
     localStorage.setItem('paymentTypes', JSON.stringify(paymentTypes));
     // ذخیره در JSONBin.io (اگر تنظیم شده باشد)
-    if (typeof saveToJSONBin === 'function' && JSONBIN_API_KEY && JSONBIN_BIN_ID) {
+    if (typeof saveToJSONBin === 'function' && JSONBIN_API_KEY) {
         const allData = {
             persons: persons,
             paymentTypes: paymentTypes,
@@ -688,7 +977,7 @@ async function savePaymentTypes() {
 async function saveTreatments() {
     localStorage.setItem('treatments', JSON.stringify(treatments));
     // ذخیره در JSONBin.io (اگر تنظیم شده باشد)
-    if (typeof saveToJSONBin === 'function' && JSONBIN_API_KEY && JSONBIN_BIN_ID) {
+    if (typeof saveToJSONBin === 'function' && JSONBIN_API_KEY) {
         const allData = {
             persons: persons,
             paymentTypes: paymentTypes,
@@ -703,14 +992,21 @@ async function saveTreatments() {
 async function savePersons() {
     localStorage.setItem('persons', JSON.stringify(persons));
     // ذخیره در JSONBin.io (اگر تنظیم شده باشد)
-    if (typeof saveToJSONBin === 'function' && JSONBIN_API_KEY && JSONBIN_BIN_ID) {
+    if (typeof saveToJSONBin === 'function' && JSONBIN_API_KEY) {
         const allData = {
             persons: persons,
             paymentTypes: paymentTypes,
             treatments: treatments,
             doctors: doctors
         };
-        await saveToJSONBin(allData);
+        const saved = await saveToJSONBin(allData);
+        if (saved) {
+            console.log('✅ داده‌ها در cloud ذخیره شدند');
+        } else {
+            console.warn('⚠️ خطا در ذخیره داده‌ها در cloud');
+        }
+    } else {
+        console.warn('⚠️ JSONBin.io تنظیم نشده - داده‌ها فقط در localStorage ذخیره می‌شوند');
     }
 }
 
@@ -718,7 +1014,7 @@ async function savePersons() {
 async function saveDoctors() {
     localStorage.setItem('doctors', JSON.stringify(doctors));
     // ذخیره در JSONBin.io (اگر تنظیم شده باشد)
-    if (typeof saveToJSONBin === 'function' && JSONBIN_API_KEY && JSONBIN_BIN_ID) {
+    if (typeof saveToJSONBin === 'function' && JSONBIN_API_KEY) {
         const allData = {
             persons: persons,
             paymentTypes: paymentTypes,
@@ -731,7 +1027,7 @@ async function saveDoctors() {
 
 // بارگذاری داده‌ها از JSONBin.io (برای ادمین)
 async function loadAllDataFromJSONBin() {
-    if (typeof loadFromJSONBin === 'function' && JSONBIN_API_KEY && JSONBIN_BIN_ID) {
+    if (typeof loadFromJSONBin === 'function' && JSONBIN_API_KEY) {
         const data = await loadFromJSONBin();
         if (data) {
             persons = data.persons || [];
@@ -820,6 +1116,61 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
+// به‌روزرسانی داده‌های پنل ادمین از cloud
+async function refreshAdminData() {
+    const statusEl = document.getElementById('adminSyncStatus');
+    if (statusEl) {
+        statusEl.textContent = '🔄 در حال به‌روزرسانی...';
+        statusEl.style.color = '#17a2b8';
+    }
+    
+    if (JSONBIN_API_KEY) {
+        const binId = JSONBIN_BIN_ID || localStorage.getItem('jsonbin_bin_id');
+        
+        // اگر Bin ID وجود ندارد، یعنی هنوز داده‌ای ذخیره نشده
+        if (!binId) {
+            if (statusEl) {
+                statusEl.textContent = 'ℹ️ هنوز داده‌ای در cloud ذخیره نشده - منتظر اولین ثبت‌نام...';
+                statusEl.style.color = '#17a2b8';
+            }
+            renderAdminPanel();
+            return;
+        }
+        
+        const loaded = await loadAllDataFromJSONBin();
+        if (loaded) {
+            renderPersonList();
+            renderPaymentList();
+            renderTreatmentList();
+            renderDoctorList();
+            renderAdminPanel();
+            
+            if (statusEl) {
+                statusEl.textContent = '✅ داده‌ها به‌روزرسانی شدند - ' + new Date().toLocaleTimeString('fa-IR');
+                statusEl.style.color = '#28a745';
+                setTimeout(() => {
+                    statusEl.textContent = '🔄 همگام‌سازی با cloud فعال است';
+                    statusEl.style.color = '#17a2b8';
+                }, 3000);
+            }
+            showNotification('داده‌ها با موفقیت به‌روزرسانی شدند!', 'success');
+        } else {
+            // اگر خطا در بارگذاری بود، از localStorage استفاده کن
+            if (statusEl) {
+                statusEl.textContent = '⚠️ خطا در بارگذاری از cloud - نمایش داده‌های محلی';
+                statusEl.style.color = '#ffc107';
+            }
+            renderAdminPanel();
+        }
+    } else {
+        if (statusEl) {
+            statusEl.textContent = '⚠️ JSONBin.io تنظیم نشده - فقط داده‌های localStorage نمایش داده می‌شوند';
+            statusEl.style.color = '#ffc107';
+        }
+        renderAdminPanel();
+    }
+}
 
 // رندر پنل ادمین
 function renderAdminPanel() {
@@ -926,31 +1277,52 @@ function exportAllData() {
 }
 
 // پاک کردن تمام داده‌ها (فقط برای ادمین)
-function clearAllData() {
+async function clearAllData() {
     if (!isAdmin) {
         showNotification('شما دسترسی ادمین ندارید!', 'info');
         return;
     }
     
     if (confirm('⚠️ هشدار: آیا مطمئن هستید که می‌خواهید تمام داده‌ها را پاک کنید؟ این عمل قابل بازگشت نیست!')) {
-        if (confirm('آیا واقعاً مطمئن هستید؟ تمام اطلاعات پاک خواهد شد!')) {
+        if (confirm('آیا واقعاً مطمئن هستید؟ تمام اطلاعات از localStorage و cloud پاک خواهد شد!')) {
+            // پاک کردن از متغیرها
             persons = [];
             paymentTypes = [];
             treatments = [];
             doctors = [];
             
-            savePersons();
-            savePaymentTypes();
-            saveTreatments();
-            saveDoctors();
+            // پاک کردن از localStorage
+            localStorage.removeItem('persons');
+            localStorage.removeItem('paymentTypes');
+            localStorage.removeItem('treatments');
+            localStorage.removeItem('doctors');
+            localStorage.removeItem('currentUser');
             
+            // پاک کردن از cloud (JSONBin.io) - skipMerge = true برای پاک کردن کامل
+            if (JSONBIN_API_KEY) {
+                const emptyData = {
+                    persons: [],
+                    paymentTypes: [],
+                    treatments: [],
+                    doctors: []
+                };
+                
+                const saved = await saveToJSONBin(emptyData, true); // skipMerge = true
+                if (saved) {
+                    console.log('✅ داده‌ها از cloud پاک شدند');
+                } else {
+                    console.warn('⚠️ خطا در پاک کردن داده‌ها از cloud');
+                }
+            }
+            
+            // رندر مجدد لیست‌ها
             renderPersonList();
             renderPaymentList();
             renderTreatmentList();
             renderDoctorList();
             renderAdminPanel();
             
-            showNotification('تمام داده‌ها پاک شدند', 'info');
+            showNotification('تمام داده‌ها از localStorage و cloud پاک شدند', 'success');
         }
     }
 }
@@ -1038,21 +1410,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 
                 // بارگذاری داده‌ها از JSONBin.io
-                if (typeof loadAllDataFromJSONBin === 'function' && JSONBIN_API_KEY && JSONBIN_BIN_ID) {
-                    loadAllDataFromJSONBin().then(loaded => {
-                        if (loaded) {
-                            renderPersonList();
-                            renderPaymentList();
-                            renderTreatmentList();
-                            renderDoctorList();
-                        }
-                        renderAdminPanel();
-                        showNotification('با موفقیت وارد پنل ادمین شدید!', 'success');
-                    });
-                } else {
-                    renderAdminPanel();
+                refreshAdminData().then(() => {
                     showNotification('با موفقیت وارد پنل ادمین شدید!', 'success');
-                }
+                    
+                    // به‌روزرسانی خودکار هر 10 ثانیه
+                    if (window.adminRefreshInterval) {
+                        clearInterval(window.adminRefreshInterval);
+                    }
+                    window.adminRefreshInterval = setInterval(() => {
+                        if (document.getElementById('admin').classList.contains('active') && isAdmin) {
+                            refreshAdminData();
+                        }
+                    }, 10000); // هر 10 ثانیه
+                });
             } else {
                 if (errorEl) {
                     errorEl.textContent = 'رمز عبور اشتباه است!';
@@ -1100,7 +1470,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     localStorage.removeItem('currentUser');
     
     // اگر ادمین است، داده‌ها را از JSONBin.io بارگذاری کن
-    if (isAdmin && typeof loadAllDataFromJSONBin === 'function' && JSONBIN_API_KEY && JSONBIN_BIN_ID) {
+    if (isAdmin && typeof loadAllDataFromJSONBin === 'function' && JSONBIN_API_KEY) {
         await loadAllDataFromJSONBin();
     }
     
