@@ -37,17 +37,20 @@ function loadData() {
     try {
         // Load patients (persons)
         const personsData = localStorage.getItem('persons');
-        patients = personsData ? JSON.parse(personsData) : [];
+        const rawPatients = personsData ? JSON.parse(personsData) : [];
+        console.log('Raw patients from localStorage:', rawPatients);
         
         // Normalize patients data
-        patients = patients.map(p => ({
+        patients = rawPatients.map(p => ({
             name: `${p.firstName || ''} ${p.lastName || ''}`.trim(),
             created_at: p.createdAt || p.created_at || new Date().toISOString()
         }));
+        console.log('Normalized patients:', patients);
 
         // Load payments (paymentTypes)
         const paymentsData = localStorage.getItem('paymentTypes');
         const rawPayments = paymentsData ? JSON.parse(paymentsData) : [];
+        console.log('Raw payments from localStorage:', rawPayments);
         
         // Normalize payments data
         payments = rawPayments.map(p => ({
@@ -56,10 +59,12 @@ function loadData() {
             priority: p.priority || 0,
             created_at: p.createdAt || p.created_at || new Date().toISOString()
         }));
+        console.log('Normalized payments:', payments);
 
         // Load treatments
         const treatmentsData = localStorage.getItem('treatments');
         const rawTreatments = treatmentsData ? JSON.parse(treatmentsData) : [];
+        console.log('Raw treatments from localStorage:', rawTreatments);
         
         // Normalize treatments data
         treatments = rawTreatments.map(t => ({
@@ -68,13 +73,54 @@ function loadData() {
             price: parseFloat(t.cost) || 0,
             created_at: t.createdAt || t.created_at || new Date().toISOString()
         }));
+        console.log('Normalized treatments:', treatments);
 
-        console.log('Data loaded:', { patients, payments, treatments });
+        console.log('✅ Data loaded successfully:', {
+            patientsCount: patients.length,
+            paymentsCount: payments.length,
+            treatmentsCount: treatments.length
+        });
+
+        // Show warning if no data
+        if (patients.length === 0 && payments.length === 0 && treatments.length === 0) {
+            console.warn('⚠️ No data found in localStorage. Please add some data first.');
+            showDataWarning();
+        }
     } catch (error) {
-        console.error('Error loading data:', error);
+        console.error('❌ Error loading data:', error);
         patients = [];
         payments = [];
         treatments = [];
+        showDataError(error.message);
+    }
+}
+
+// Show warning when no data is available
+function showDataWarning() {
+    const warningDiv = document.createElement('div');
+    warningDiv.style.cssText = 'background: #fff3cd; border: 2px solid #ffc107; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: center;';
+    warningDiv.innerHTML = `
+        <h3 style="color: #856404; margin-bottom: 10px;">⚠️ داده‌ای یافت نشد</h3>
+        <p style="color: #856404; margin-bottom: 15px;">برای نمایش نمودارها و گزارش‌ها، ابتدا باید در صفحه اصلی داده ثبت کنید.</p>
+        <a href="index.html" style="display: inline-block; padding: 10px 20px; background: #28a745; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">برو به صفحه اصلی</a>
+    `;
+    const main = document.querySelector('.admin-main');
+    if (main) {
+        main.insertBefore(warningDiv, main.firstChild);
+    }
+}
+
+// Show error message
+function showDataError(message) {
+    const errorDiv = document.createElement('div');
+    errorDiv.style.cssText = 'background: #f8d7da; border: 2px solid #dc3545; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: center;';
+    errorDiv.innerHTML = `
+        <h3 style="color: #721c24; margin-bottom: 10px;">❌ خطا در بارگذاری داده‌ها</h3>
+        <p style="color: #721c24;">${message}</p>
+    `;
+    const main = document.querySelector('.admin-main');
+    if (main) {
+        main.insertBefore(errorDiv, main.firstChild);
     }
 }
 
@@ -257,9 +303,11 @@ function renderPaymentTypesChart() {
     }
 
     const paymentCounts = countPaymentTypes();
+    console.log('Payment counts for chart:', paymentCounts);
     
     if (paymentCounts.length === 0) {
-        ctx.parentElement.innerHTML = '<p class="no-data">داده‌ای برای نمایش وجود ندارد</p>';
+        console.warn('No payment data to display in chart');
+        ctx.parentElement.innerHTML = '<div class="no-data"><p>داده‌ای برای نمایش وجود ندارد</p><p style="font-size: 0.9rem; margin-top: 10px; color: #6c757d;">لطفاً در صفحه اصلی انواع پرداخت ثبت کنید.</p></div>';
         return;
     }
 
@@ -330,9 +378,11 @@ function renderTreatmentProfitabilityChart() {
     }
 
     const treatmentData = calculateTreatmentProfitability();
+    console.log('Treatment data for chart:', treatmentData);
     
     if (treatmentData.length === 0) {
-        ctx.parentElement.innerHTML = '<p class="no-data">داده‌ای برای نمایش وجود ندارد</p>';
+        console.warn('No treatment data to display in chart');
+        ctx.parentElement.innerHTML = '<div class="no-data"><p>داده‌ای برای نمایش وجود ندارد</p><p style="font-size: 0.9rem; margin-top: 10px; color: #6c757d;">لطفاً در صفحه اصلی درمان‌ها را ثبت کنید.</p></div>';
         return;
     }
 
@@ -419,9 +469,11 @@ function renderDailyRegistrationsChart() {
     }
 
     const dailyData = calculateDailyRegistrations();
+    console.log('Daily registrations data:', dailyData);
     
     if (dailyData.labels.length === 0) {
-        ctx.parentElement.innerHTML = '<p class="no-data">داده‌ای برای نمایش وجود ندارد</p>';
+        console.warn('No daily registration data to display');
+        ctx.parentElement.innerHTML = '<div class="no-data"><p>داده‌ای برای نمایش وجود ندارد</p><p style="font-size: 0.9rem; margin-top: 10px; color: #6c757d;">لطفاً در صفحه اصلی اشخاص را ثبت کنید.</p></div>';
         return;
     }
 
@@ -551,29 +603,42 @@ function renderTreatmentsTable() {
 // Render entire dashboard
 function renderDashboard() {
     try {
-        console.log('Rendering dashboard...');
+        console.log('🔄 Rendering dashboard...');
+        console.log('Current data state:', {
+            patients: patients.length,
+            payments: payments.length,
+            treatments: treatments.length
+        });
+        
         renderSummaryCards();
-        console.log('Summary cards rendered');
+        console.log('✅ Summary cards rendered');
         
         renderPaymentTypesChart();
-        console.log('Payment types chart rendered');
+        console.log('✅ Payment types chart rendered');
         
         renderPaymentTypesTable();
-        console.log('Payment types table rendered');
+        console.log('✅ Payment types table rendered');
         
         renderTreatmentProfitabilityChart();
-        console.log('Treatment profitability chart rendered');
+        console.log('✅ Treatment profitability chart rendered');
         
         renderTreatmentsTable();
-        console.log('Treatments table rendered');
+        console.log('✅ Treatments table rendered');
         
         renderDailyRegistrationsChart();
-        console.log('Daily registrations chart rendered');
+        console.log('✅ Daily registrations chart rendered');
         
-        console.log('Dashboard rendered successfully');
+        console.log('✅ Dashboard rendered successfully');
     } catch (error) {
-        console.error('Error rendering dashboard:', error);
-        alert('خطا در نمایش داشبورد: ' + error.message);
+        console.error('❌ Error rendering dashboard:', error);
+        console.error('Error stack:', error.stack);
+        const errorMsg = document.createElement('div');
+        errorMsg.style.cssText = 'background: #f8d7da; border: 2px solid #dc3545; border-radius: 8px; padding: 20px; margin: 20px; text-align: center;';
+        errorMsg.innerHTML = `<h3 style="color: #721c24;">خطا در نمایش داشبورد</h3><p style="color: #721c24;">${error.message}</p>`;
+        const main = document.querySelector('.admin-main');
+        if (main) {
+            main.prepend(errorMsg);
+        }
     }
 }
 
