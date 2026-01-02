@@ -6,12 +6,12 @@
     <title>پنل مدیریت - آتیه</title>
     <link rel="stylesheet" href="admin.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
     <script>
-        // Wait for Chart.js to load before initializing
         window.addEventListener('load', function() {
             if (typeof Chart === 'undefined') {
                 console.error('Chart.js failed to load');
-                document.body.innerHTML = '<div style="padding: 50px; text-align: center; color: red; font-family: Arial;"><h1>خطا در بارگذاری</h1><p>کتابخانه Chart.js بارگذاری نشد. لطفاً اتصال اینترنت خود را بررسی کنید.</p><button onclick="location.reload()" style="padding: 10px 20px; margin-top: 20px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer;">تلاش مجدد</button></div>';
+                document.body.innerHTML = '<div style="padding: 50px; text-align: center; color: red; font-family: Arial;"><h1>خطا در بارگذاری</h1><p>کتابخانه Chart.js بارگذاری نشد.</p><button onclick="location.reload()" style="padding: 10px 20px; margin-top: 20px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer;">تلاش مجدد</button></div>';
             }
         });
     </script>
@@ -19,15 +19,18 @@
 <body>
     <div class="admin-container">
         <header class="admin-header">
-            <h1>پنل مدیریت ادمین</h1>
+            <div class="header-title">
+                <h1>پنل مدیریت ادمین</h1>
+                <p class="header-subtitle">تحلیل جامع و گزارش‌های تفصیلی</p>
+            </div>
             <div class="header-actions">
                 <a href="index.html" class="btn-back">بازگشت به صفحه اصلی</a>
-                <button id="refreshDataBtn" class="btn-refresh-data">🔄 به‌روزرسانی داده‌ها</button>
-                <button id="exportCSVBtn" class="btn-export-csv">دانلود CSV</button>
+                <button id="refreshDataBtn" class="btn-refresh-data">🔄 به‌روزرسانی</button>
+                <button id="exportCSVBtn" class="btn-export-csv">📥 دانلود CSV</button>
             </div>
         </header>
         
-        <!-- Debug Info Panel -->
+        <!-- Debug Panel -->
         <div id="debugPanel" class="debug-panel" style="display: none;">
             <h3>اطلاعات دیباگ</h3>
             <div id="debugContent"></div>
@@ -35,94 +38,199 @@
         </div>
 
         <main class="admin-main">
-            <!-- Summary Cards -->
-            <section class="summary-cards">
-                <div class="summary-card">
-                    <div class="card-icon">👥</div>
+            <!-- Advanced Summary Cards -->
+            <section class="summary-cards-grid">
+                <div class="summary-card card-primary">
+                    <div class="card-icon-wrapper">
+                        <div class="card-icon">👥</div>
+                    </div>
                     <div class="card-content">
                         <div class="card-value" id="totalUsers">0</div>
                         <div class="card-label">کاربران ثبت شده</div>
+                        <div class="card-change" id="usersChange">-</div>
                     </div>
                 </div>
 
-                <div class="summary-card">
-                    <div class="card-icon">⭐</div>
+                <div class="summary-card card-success">
+                    <div class="card-icon-wrapper">
+                        <div class="card-icon">⭐</div>
+                    </div>
                     <div class="card-content">
                         <div class="card-value" id="avgPaymentScore">0</div>
                         <div class="card-label">میانگین امتیاز پرداخت</div>
+                        <div class="card-change" id="scoreChange">-</div>
                     </div>
                 </div>
 
-                <div class="summary-card">
-                    <div class="card-icon">💰</div>
+                <div class="summary-card card-warning">
+                    <div class="card-icon-wrapper">
+                        <div class="card-icon">💰</div>
+                    </div>
                     <div class="card-content">
                         <div class="card-value" id="topTreatment">-</div>
                         <div class="card-label">پرسودترین درمان</div>
+                        <div class="card-change" id="treatmentChange">-</div>
+                    </div>
+                </div>
+
+                <div class="summary-card card-info">
+                    <div class="card-icon-wrapper">
+                        <div class="card-icon">💳</div>
+                    </div>
+                    <div class="card-content">
+                        <div class="card-value" id="totalPayments">0</div>
+                        <div class="card-label">کل پرداخت‌ها</div>
+                        <div class="card-change" id="paymentsChange">-</div>
+                    </div>
+                </div>
+
+                <div class="summary-card card-danger">
+                    <div class="card-icon-wrapper">
+                        <div class="card-icon">🦷</div>
+                    </div>
+                    <div class="card-content">
+                        <div class="card-value" id="totalTreatments">0</div>
+                        <div class="card-label">کل درمان‌ها</div>
+                        <div class="card-change" id="treatmentsChange">-</div>
+                    </div>
+                </div>
+
+                <div class="summary-card card-purple">
+                    <div class="card-icon-wrapper">
+                        <div class="card-icon">📊</div>
+                    </div>
+                    <div class="card-content">
+                        <div class="card-value" id="totalRevenue">0</div>
+                        <div class="card-label">درآمد کل (تومان)</div>
+                        <div class="card-change" id="revenueChange">-</div>
                     </div>
                 </div>
             </section>
 
-            <!-- Payment Types Report -->
-            <section class="report-section">
-                <div class="section-header">
-                    <h2>گزارش انواع پرداخت</h2>
-                </div>
-                <div class="section-content">
-                    <div class="chart-container">
-                        <canvas id="paymentTypesChart"></canvas>
+            <!-- Advanced Analytics Section -->
+            <section class="analytics-section">
+                <div class="analytics-grid">
+                    <!-- Payment Types Analysis -->
+                    <div class="analytics-card">
+                        <div class="analytics-header">
+                            <h3>تحلیل انواع پرداخت</h3>
+                            <span class="analytics-badge">جزئیات کامل</span>
+                        </div>
+                        <div class="chart-wrapper">
+                            <canvas id="paymentTypesChart"></canvas>
+                        </div>
+                        <div class="analytics-stats" id="paymentStats"></div>
                     </div>
-                    <div class="report-table">
-                        <table id="paymentTypesTable">
-                            <thead>
-                                <tr>
-                                    <th>نوع پرداخت</th>
-                                    <th>تعداد</th>
-                                    <th>میانگین امتیاز</th>
-                                </tr>
-                            </thead>
-                            <tbody id="paymentTypesTableBody">
-                                <!-- Populated by JavaScript -->
-                            </tbody>
-                        </table>
+
+                    <!-- Payment Score Distribution -->
+                    <div class="analytics-card">
+                        <div class="analytics-header">
+                            <h3>توزیع امتیاز پرداخت‌ها</h3>
+                            <span class="analytics-badge">آمار دقیق</span>
+                        </div>
+                        <div class="chart-wrapper">
+                            <canvas id="paymentScoreChart"></canvas>
+                        </div>
+                        <div class="analytics-stats" id="scoreStats"></div>
                     </div>
                 </div>
             </section>
 
-            <!-- Treatment Profitability Report -->
-            <section class="report-section">
-                <div class="section-header">
-                    <h2>گزارش سودآوری درمان‌ها</h2>
-                </div>
-                <div class="section-content">
-                    <div class="chart-container">
-                        <canvas id="treatmentProfitabilityChart"></canvas>
-                    </div>
-                    <div class="report-table">
-                        <table id="treatmentsTable">
-                            <thead>
-                                <tr>
-                                    <th>نام درمان</th>
-                                    <th>سطح سودآوری</th>
-                                    <th>هزینه (تومان)</th>
-                                    <th>تعداد</th>
-                                </tr>
-                            </thead>
-                            <tbody id="treatmentsTableBody">
-                                <!-- Populated by JavaScript -->
-                            </tbody>
-                        </table>
+            <!-- Treatment Analysis Section -->
+            <section class="analytics-section">
+                <div class="analytics-grid">
+                    <!-- Treatment Profitability -->
+                    <div class="analytics-card full-width">
+                        <div class="analytics-header">
+                            <h3>تحلیل سودآوری درمان‌ها</h3>
+                            <span class="analytics-badge">مقایسه کامل</span>
+                        </div>
+                        <div class="chart-wrapper large-chart">
+                            <canvas id="treatmentProfitabilityChart"></canvas>
+                        </div>
+                        <div class="analytics-stats" id="treatmentStats"></div>
                     </div>
                 </div>
             </section>
 
-            <!-- Daily Registrations Chart (Optional) -->
-            <section class="report-section">
-                <div class="section-header">
-                    <h2>ثبت‌نام‌های روزانه</h2>
+            <!-- Revenue Analysis -->
+            <section class="analytics-section">
+                <div class="analytics-grid">
+                    <div class="analytics-card full-width">
+                        <div class="analytics-header">
+                            <h3>تحلیل درآمد بر اساس درمان</h3>
+                            <span class="analytics-badge">مالی</span>
+                        </div>
+                        <div class="chart-wrapper large-chart">
+                            <canvas id="revenueChart"></canvas>
+                        </div>
+                    </div>
                 </div>
-                <div class="section-content">
-                    <div class="chart-container">
-                        <canvas id="dailyRegistrationsChart"></canvas>
+            </section>
+
+            <!-- Time Series Analysis -->
+            <section class="analytics-section">
+                <div class="analytics-grid">
+                    <div class="analytics-card full-width">
+                        <div class="analytics-header">
+                            <h3>روند ثبت‌نام‌های روزانه</h3>
+                            <span class="analytics-badge">زمانی</span>
+                        </div>
+                        <div class="chart-wrapper large-chart">
+                            <canvas id="dailyRegistrationsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Detailed Tables Section -->
+            <section class="tables-section">
+                <div class="table-grid">
+                    <!-- Payment Types Table -->
+                    <div class="table-card">
+                        <div class="table-header">
+                            <h3>جدول تفصیلی انواع پرداخت</h3>
+                            <span class="table-count" id="paymentTableCount">0 مورد</span>
+                        </div>
+                        <div class="table-wrapper">
+                            <table id="paymentTypesTable">
+                                <thead>
+                                    <tr>
+                                        <th>نوع پرداخت</th>
+                                        <th>تعداد</th>
+                                        <th>میانگین امتیاز</th>
+                                        <th>حداکثر</th>
+                                        <th>حداقل</th>
+                                        <th>درصد</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="paymentTypesTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Treatments Table -->
+                    <div class="table-card">
+                        <div class="table-header">
+                            <h3>جدول تفصیلی درمان‌ها</h3>
+                            <span class="table-count" id="treatmentTableCount">0 مورد</span>
+                        </div>
+                        <div class="table-wrapper">
+                            <table id="treatmentsTable">
+                                <thead>
+                                    <tr>
+                                        <th>نام درمان</th>
+                                        <th>سطح سودآوری</th>
+                                        <th>میانگین قیمت</th>
+                                        <th>حداکثر قیمت</th>
+                                        <th>حداقل قیمت</th>
+                                        <th>تعداد</th>
+                                        <th>درآمد کل</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="treatmentsTableBody"></tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -132,4 +240,3 @@
     <script src="admin.js"></script>
 </body>
 </html>
-

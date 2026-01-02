@@ -8,7 +8,9 @@ let treatments = [];
 
 // Chart instances
 let paymentTypesChart = null;
+let paymentScoreChart = null;
 let treatmentProfitabilityChart = null;
+let revenueChart = null;
 let dailyRegistrationsChart = null;
 
 // Initialize dashboard on page load
@@ -324,42 +326,68 @@ function renderPaymentTypesChart() {
     // Generate colors
     const colors = generateColors(data.length);
 
+    // Professional gradient colors
+    const gradientColors = [
+        'rgba(102, 126, 234, 0.8)',
+        'rgba(118, 75, 162, 0.8)',
+        'rgba(240, 147, 251, 0.8)',
+        'rgba(245, 87, 108, 0.8)',
+        'rgba(79, 172, 254, 0.8)',
+        'rgba(0, 242, 254, 0.8)',
+        'rgba(67, 233, 123, 0.8)',
+        'rgba(56, 249, 215, 0.8)'
+    ];
+    
     try {
         paymentTypesChart = new Chart(ctx, {
-        type: 'pie',
+        type: 'doughnut',
         data: {
             labels: labels,
             datasets: [{
                 data: data,
-                backgroundColor: colors,
+                backgroundColor: gradientColors.slice(0, data.length),
                 borderColor: '#ffffff',
-                borderWidth: 2
+                borderWidth: 3,
+                hoverOffset: 10
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: true,
+            cutout: '60%',
             plugins: {
                 legend: {
                     position: 'bottom',
                     labels: {
-                        padding: 15,
+                        padding: 20,
                         font: {
-                            size: 12
-                        }
+                            size: 13,
+                            weight: '600'
+                        },
+                        usePointStyle: true,
+                        pointStyle: 'circle'
                     }
                 },
                 tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    padding: 15,
+                    titleFont: { size: 15, weight: 'bold' },
+                    bodyFont: { size: 14 },
                     callbacks: {
                         label: function(context) {
                             const label = context.label || '';
                             const value = context.parsed || 0;
                             const total = context.dataset.data.reduce((a, b) => a + b, 0);
                             const percentage = ((value / total) * 100).toFixed(1);
-                            return `${label}: ${value} (${percentage}%)`;
+                            return `${label}: ${value} مورد (${percentage}%)`;
                         }
                     }
                 }
+            },
+            animation: {
+                animateRotate: true,
+                animateScale: true,
+                duration: 2000
             }
         }
     });
@@ -421,9 +449,18 @@ function renderTreatmentProfitabilityChart() {
             datasets: [{
                 label: 'میانگین قیمت (تومان)',
                 data: prices,
-                backgroundColor: colors,
+                backgroundColor: (ctx) => {
+                    const gradient = ctx.chart.ctx.createLinearGradient(0, 0, 0, 400);
+                    const colorIndex = ctx.dataIndex % colors.length;
+                    const baseColor = colors[colorIndex];
+                    gradient.addColorStop(0, baseColor);
+                    gradient.addColorStop(1, darkenColor(baseColor, 0.3));
+                    return gradient;
+                },
                 borderColor: colors.map(c => darkenColor(c, 0.2)),
-                borderWidth: 2
+                borderWidth: 2,
+                borderRadius: 8,
+                borderSkipped: false
             }]
         },
         options: {
@@ -434,10 +471,14 @@ function renderTreatmentProfitabilityChart() {
                     display: false
                 },
                 tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    padding: 15,
+                    titleFont: { size: 15, weight: 'bold' },
+                    bodyFont: { size: 14 },
                     callbacks: {
                         label: function(context) {
                             const value = context.parsed.y || 0;
-                            return `قیمت: ${value.toLocaleString('fa-IR')} تومان`;
+                            return `میانگین قیمت: ${value.toLocaleString('fa-IR')} تومان`;
                         }
                     }
                 }
@@ -447,10 +488,31 @@ function renderTreatmentProfitabilityChart() {
                     beginAtZero: true,
                     ticks: {
                         callback: function(value) {
+                            if (value >= 1000000) {
+                                return (value / 1000000).toFixed(1) + 'M';
+                            } else if (value >= 1000) {
+                                return (value / 1000).toFixed(1) + 'K';
+                            }
                             return value.toLocaleString('fa-IR');
-                        }
+                        },
+                        font: { size: 12 }
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    }
+                },
+                x: {
+                    ticks: {
+                        font: { size: 12 }
+                    },
+                    grid: {
+                        display: false
                     }
                 }
+            },
+            animation: {
+                duration: 2000,
+                easing: 'easeInOutQuart'
             }
         }
     });
@@ -496,16 +558,24 @@ function renderDailyRegistrationsChart() {
             datasets: [{
                 label: 'تعداد ثبت‌نام',
                 data: dailyData.data,
-                borderColor: '#8B1538',
-                backgroundColor: 'rgba(139, 21, 56, 0.1)',
-                borderWidth: 3,
+                borderColor: '#667eea',
+                backgroundColor: (ctx) => {
+                    const gradient = ctx.chart.ctx.createLinearGradient(0, 0, 0, 400);
+                    gradient.addColorStop(0, 'rgba(102, 126, 234, 0.3)');
+                    gradient.addColorStop(1, 'rgba(102, 126, 234, 0.05)');
+                    return gradient;
+                },
+                borderWidth: 4,
                 fill: true,
-                tension: 0.4,
-                pointRadius: 5,
-                pointHoverRadius: 7,
-                pointBackgroundColor: '#8B1538',
+                tension: 0.5,
+                pointRadius: 6,
+                pointHoverRadius: 8,
+                pointBackgroundColor: '#667eea',
                 pointBorderColor: '#ffffff',
-                pointBorderWidth: 2
+                pointBorderWidth: 3,
+                pointHoverBackgroundColor: '#764ba2',
+                pointHoverBorderColor: '#ffffff',
+                pointHoverBorderWidth: 3
             }]
         },
         options: {
@@ -516,16 +586,22 @@ function renderDailyRegistrationsChart() {
                     display: true,
                     position: 'top',
                     labels: {
-                        padding: 15,
+                        padding: 20,
                         font: {
-                            size: 12
-                        }
+                            size: 13,
+                            weight: '600'
+                        },
+                        usePointStyle: true
                     }
                 },
                 tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    padding: 15,
+                    titleFont: { size: 15, weight: 'bold' },
+                    bodyFont: { size: 14 },
                     callbacks: {
                         label: function(context) {
-                            return `ثبت‌نام: ${context.parsed.y}`;
+                            return `تعداد ثبت‌نام: ${context.parsed.y} نفر`;
                         }
                     }
                 }
@@ -534,9 +610,25 @@ function renderDailyRegistrationsChart() {
                 y: {
                     beginAtZero: true,
                     ticks: {
-                        stepSize: 1
+                        stepSize: 1,
+                        font: { size: 12 }
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    }
+                },
+                x: {
+                    ticks: {
+                        font: { size: 12 }
+                    },
+                    grid: {
+                        display: false
                     }
                 }
+            },
+            animation: {
+                duration: 2000,
+                easing: 'easeInOutQuart'
             }
         }
     });
@@ -546,13 +638,99 @@ function renderDailyRegistrationsChart() {
     }
 }
 
+// Calculate advanced metrics
+function calculateAdvancedMetrics() {
+    const totalPayments = payments.length;
+    const totalTreatments = treatments.length;
+    
+    // Calculate total revenue
+    let totalRevenue = 0;
+    treatments.forEach(t => {
+        totalRevenue += t.price || 0;
+    });
+    
+    return {
+        totalPayments,
+        totalTreatments,
+        totalRevenue
+    };
+}
+
 // Render summary cards
 function renderSummaryCards() {
     const metrics = calculateSummaryMetrics();
+    const advanced = calculateAdvancedMetrics();
     
-    document.getElementById('totalUsers').textContent = metrics.totalUsers;
-    document.getElementById('avgPaymentScore').textContent = metrics.avgPaymentScore;
-    document.getElementById('topTreatment').textContent = metrics.topTreatment;
+    // Update basic cards
+    const totalUsersEl = document.getElementById('totalUsers');
+    const avgPaymentScoreEl = document.getElementById('avgPaymentScore');
+    const topTreatmentEl = document.getElementById('topTreatment');
+    
+    if (totalUsersEl) totalUsersEl.textContent = metrics.totalUsers;
+    if (avgPaymentScoreEl) avgPaymentScoreEl.textContent = metrics.avgPaymentScore;
+    if (topTreatmentEl) topTreatmentEl.textContent = metrics.topTreatment;
+    
+    // Update new cards
+    const totalPaymentsEl = document.getElementById('totalPayments');
+    const totalTreatmentsEl = document.getElementById('totalTreatments');
+    const totalRevenueEl = document.getElementById('totalRevenue');
+    
+    if (totalPaymentsEl) totalPaymentsEl.textContent = advanced.totalPayments;
+    if (totalTreatmentsEl) totalTreatmentsEl.textContent = advanced.totalTreatments;
+    if (totalRevenueEl) {
+        totalRevenueEl.textContent = advanced.totalRevenue > 0 
+            ? (advanced.totalRevenue / 1000000).toFixed(1) + 'M'
+            : '0';
+    }
+}
+
+// Render advanced statistics
+function renderAdvancedStats() {
+    const paymentCounts = countPaymentTypes();
+    const paymentStatsEl = document.getElementById('paymentStats');
+    
+    if (paymentStatsEl && paymentCounts.length > 0) {
+        const total = paymentCounts.reduce((sum, p) => sum + p.count, 0);
+        const topPayment = paymentCounts[0];
+        
+        paymentStatsEl.innerHTML = `
+            <div class="stat-item">
+                <div class="stat-item-label">کل پرداخت‌ها</div>
+                <div class="stat-item-value">${total}</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-item-label">محبوب‌ترین</div>
+                <div class="stat-item-value">${topPayment.type}</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-item-label">میانگین امتیاز</div>
+                <div class="stat-item-value">${topPayment.avgScore}</div>
+            </div>
+        `;
+    }
+    
+    const treatmentData = calculateTreatmentProfitability();
+    const treatmentStatsEl = document.getElementById('treatmentStats');
+    
+    if (treatmentStatsEl && treatmentData.length > 0) {
+        const totalRevenue = treatmentData.reduce((sum, t) => sum + (t.avgPrice * t.count), 0);
+        const topTreatment = treatmentData[0];
+        
+        treatmentStatsEl.innerHTML = `
+            <div class="stat-item">
+                <div class="stat-item-label">کل درآمد</div>
+                <div class="stat-item-value">${(totalRevenue / 1000000).toFixed(1)}M</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-item-label">پرسودترین</div>
+                <div class="stat-item-value">${topTreatment.name}</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-item-label">میانگین قیمت</div>
+                <div class="stat-item-value">${(topTreatment.avgPrice / 1000000).toFixed(1)}M</div>
+            </div>
+        `;
+    }
 }
 
 // Render payment types table
@@ -567,13 +745,39 @@ function renderPaymentTypesTable() {
         return;
     }
 
-    tbody.innerHTML = paymentCounts.map(p => `
+    const total = paymentCounts.reduce((sum, p) => sum + p.count, 0);
+    const scoresByType = {};
+    payments.forEach(p => {
+        const type = p.type || 'نامشخص';
+        if (!scoresByType[type]) {
+            scoresByType[type] = [];
+        }
+        if (p.score > 0) {
+            scoresByType[type].push(p.score);
+        }
+    });
+    
+    tbody.innerHTML = paymentCounts.map(p => {
+        const scores = scoresByType[p.type] || [];
+        const max = scores.length > 0 ? Math.max(...scores) : '-';
+        const min = scores.length > 0 ? Math.min(...scores) : '-';
+        const percentage = total > 0 ? ((p.count / total) * 100).toFixed(1) : '0';
+        
+        return `
         <tr>
             <td>${p.type}</td>
             <td>${p.count}</td>
             <td>${p.avgScore}</td>
+            <td>${max}</td>
+            <td>${min}</td>
+            <td>${percentage}%</td>
         </tr>
-    `).join('');
+    `;
+    }).join('');
+    
+    // Update table count
+    const countEl = document.getElementById('paymentTableCount');
+    if (countEl) countEl.textContent = `${paymentCounts.length} مورد`;
 }
 
 // Render treatments table
@@ -596,14 +800,39 @@ function renderTreatmentsTable() {
         'very-low': 'خیلی کم‌سود'
     };
 
-    tbody.innerHTML = treatmentData.map(t => `
+    const pricesByTreatment = {};
+    treatments.forEach(t => {
+        const name = t.name || 'نامشخص';
+        if (!pricesByTreatment[name]) {
+            pricesByTreatment[name] = [];
+        }
+        if (t.price > 0) {
+            pricesByTreatment[name].push(t.price);
+        }
+    });
+    
+    tbody.innerHTML = treatmentData.map(t => {
+        const prices = pricesByTreatment[t.name] || [];
+        const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
+        const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+        const totalRevenue = t.avgPrice * t.count;
+        
+        return `
         <tr>
             <td>${t.name}</td>
             <td>${profitabilityLabels[t.profitability] || t.profitability}</td>
             <td>${t.avgPrice > 0 ? t.avgPrice.toLocaleString('fa-IR') : '-'}</td>
+            <td>${maxPrice > 0 ? maxPrice.toLocaleString('fa-IR') : '-'}</td>
+            <td>${minPrice > 0 ? minPrice.toLocaleString('fa-IR') : '-'}</td>
             <td>${t.count}</td>
+            <td>${totalRevenue > 0 ? totalRevenue.toLocaleString('fa-IR') : '-'}</td>
         </tr>
-    `).join('');
+    `;
+    }).join('');
+    
+    // Update table count
+    const countEl = document.getElementById('treatmentTableCount');
+    if (countEl) countEl.textContent = `${treatmentData.length} مورد`;
 }
 
 // Render entire dashboard
@@ -633,6 +862,15 @@ function renderDashboard() {
         
         renderDailyRegistrationsChart();
         console.log('✅ Daily registrations chart rendered');
+        
+        renderPaymentScoreChart();
+        console.log('✅ Payment score chart rendered');
+        
+        renderRevenueChart();
+        console.log('✅ Revenue chart rendered');
+        
+        renderAdvancedStats();
+        console.log('✅ Advanced stats rendered');
         
         console.log('✅ Dashboard rendered successfully');
     } catch (error) {
@@ -819,5 +1057,237 @@ function darkenColor(color, amount) {
     const g = Math.max(0, ((num >> 8) & 0xFF) - Math.round(255 * amount));
     const b = Math.max(0, (num & 0xFF) - Math.round(255 * amount));
     return '#' + (0x1000000 + (r << 16) + (g << 8) + b).toString(16).slice(1);
+}
+
+// Generate professional gradient colors
+function generateGradientColors(count, baseColor) {
+    const gradients = [
+        ['#667eea', '#764ba2'],
+        ['#f093fb', '#f5576c'],
+        ['#4facfe', '#00f2fe'],
+        ['#43e97b', '#38f9d7'],
+        ['#fa709a', '#fee140'],
+        ['#30cfd0', '#330867'],
+        ['#a8edea', '#fed6e3'],
+        ['#ff9a9e', '#fecfef']
+    ];
+    
+    const result = [];
+    for (let i = 0; i < count; i++) {
+        result.push(gradients[i % gradients.length]);
+    }
+    return result;
+}
+
+// Calculate payment score distribution
+function calculatePaymentScoreDistribution() {
+    const distribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0 };
+    
+    payments.forEach(p => {
+        const score = Math.round(p.score);
+        if (score >= 1 && score <= 10) {
+            distribution[score]++;
+        }
+    });
+    
+    return {
+        labels: Object.keys(distribution).map(k => `${k}⭐`),
+        data: Object.values(distribution)
+    };
+}
+
+// Render payment score distribution chart
+function renderPaymentScoreChart() {
+    const ctx = document.getElementById('paymentScoreChart');
+    if (!ctx) return;
+    
+    if (typeof Chart === 'undefined') return;
+    
+    const distData = calculatePaymentScoreDistribution();
+    
+    if (distData.data.every(v => v === 0)) {
+        ctx.parentElement.innerHTML = '<div class="no-data"><p>داده‌ای برای نمایش وجود ندارد</p></div>';
+        return;
+    }
+    
+    if (paymentScoreChart) {
+        paymentScoreChart.destroy();
+    }
+    
+    try {
+        paymentScoreChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: distData.labels,
+                datasets: [{
+                    label: 'تعداد پرداخت‌ها',
+                    data: distData.data,
+                    backgroundColor: 'rgba(102, 126, 234, 0.8)',
+                    borderColor: '#667eea',
+                    borderWidth: 2,
+                    borderRadius: 8,
+                    borderSkipped: false
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
+                        titleFont: { size: 14, weight: 'bold' },
+                        bodyFont: { size: 13 }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1,
+                            font: { size: 12 }
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            font: { size: 12 }
+                        },
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Render stats
+        const statsEl = document.getElementById('scoreStats');
+        if (statsEl) {
+            const scores = payments.map(p => p.score).filter(s => s > 0);
+            const avg = scores.length > 0 ? (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1) : 0;
+            const max = scores.length > 0 ? Math.max(...scores) : 0;
+            const min = scores.length > 0 ? Math.min(...scores) : 0;
+            
+            statsEl.innerHTML = `
+                <div class="stat-item">
+                    <div class="stat-item-label">میانگین</div>
+                    <div class="stat-item-value">${avg}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-item-label">حداکثر</div>
+                    <div class="stat-item-value">${max}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-item-label">حداقل</div>
+                    <div class="stat-item-value">${min}</div>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error rendering payment score chart:', error);
+    }
+}
+
+// Calculate revenue by treatment
+function calculateRevenueByTreatment() {
+    const revenueByTreatment = {};
+    
+    treatments.forEach(t => {
+        const name = t.name || 'نامشخص';
+        if (!revenueByTreatment[name]) {
+            revenueByTreatment[name] = 0;
+        }
+        revenueByTreatment[name] += t.price || 0;
+    });
+    
+    const sorted = Object.entries(revenueByTreatment)
+        .map(([name, revenue]) => ({ name, revenue }))
+        .sort((a, b) => b.revenue - a.revenue);
+    
+    return {
+        labels: sorted.map(t => t.name),
+        data: sorted.map(t => t.revenue)
+    };
+}
+
+// Render revenue chart
+function renderRevenueChart() {
+    const ctx = document.getElementById('revenueChart');
+    if (!ctx) return;
+    
+    if (typeof Chart === 'undefined') return;
+    
+    const revenueData = calculateRevenueByTreatment();
+    
+    if (revenueData.data.length === 0 || revenueData.data.every(v => v === 0)) {
+        ctx.parentElement.innerHTML = '<div class="no-data"><p>داده‌ای برای نمایش وجود ندارد</p></div>';
+        return;
+    }
+    
+    if (revenueChart) {
+        revenueChart.destroy();
+    }
+    
+    try {
+        revenueChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: revenueData.labels,
+                datasets: [{
+                    label: 'درآمد (تومان)',
+                    data: revenueData.data,
+                    backgroundColor: (ctx) => {
+                        const gradient = ctx.chart.ctx.createLinearGradient(0, 0, 0, 400);
+                        gradient.addColorStop(0, 'rgba(102, 126, 234, 0.8)');
+                        gradient.addColorStop(1, 'rgba(118, 75, 162, 0.8)');
+                        return gradient;
+                    },
+                    borderColor: '#667eea',
+                    borderWidth: 2,
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const value = context.parsed.y || 0;
+                                return `درآمد: ${value.toLocaleString('fa-IR')} تومان`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                if (value >= 1000000) {
+                                    return (value / 1000000).toFixed(1) + 'M';
+                                } else if (value >= 1000) {
+                                    return (value / 1000).toFixed(1) + 'K';
+                                }
+                                return value.toLocaleString('fa-IR');
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Error rendering revenue chart:', error);
+    }
 }
 
