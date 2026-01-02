@@ -12,10 +12,24 @@ let treatmentProfitabilityChart = null;
 let dailyRegistrationsChart = null;
 
 // Initialize dashboard on page load
-document.addEventListener('DOMContentLoaded', () => {
+function initializeDashboard() {
+    // Check if Chart.js is loaded
+    if (typeof Chart === 'undefined') {
+        console.error('Chart.js is not loaded! Retrying...');
+        setTimeout(initializeDashboard, 500);
+        return;
+    }
+    
+    console.log('Chart.js loaded successfully');
     loadData();
     renderDashboard();
     setupExportButton();
+}
+
+// Wait for both DOM and Chart.js to be ready
+document.addEventListener('DOMContentLoaded', () => {
+    // Give Chart.js a moment to load
+    setTimeout(initializeDashboard, 100);
 });
 
 // Load data from localStorage
@@ -231,7 +245,16 @@ function calculateDailyRegistrations() {
 // Render payment types pie chart
 function renderPaymentTypesChart() {
     const ctx = document.getElementById('paymentTypesChart');
-    if (!ctx) return;
+    if (!ctx) {
+        console.error('Payment types chart canvas not found');
+        return;
+    }
+
+    if (typeof Chart === 'undefined') {
+        console.error('Chart.js is not available');
+        ctx.parentElement.innerHTML = '<p class="no-data">خطا در بارگذاری کتابخانه نمودار</p>';
+        return;
+    }
 
     const paymentCounts = countPaymentTypes();
     
@@ -251,7 +274,8 @@ function renderPaymentTypesChart() {
     // Generate colors
     const colors = generateColors(data.length);
 
-    paymentTypesChart = new Chart(ctx, {
+    try {
+        paymentTypesChart = new Chart(ctx, {
         type: 'pie',
         data: {
             labels: labels,
@@ -294,7 +318,16 @@ function renderPaymentTypesChart() {
 // Render treatment profitability bar chart
 function renderTreatmentProfitabilityChart() {
     const ctx = document.getElementById('treatmentProfitabilityChart');
-    if (!ctx) return;
+    if (!ctx) {
+        console.error('Treatment profitability chart canvas not found');
+        return;
+    }
+
+    if (typeof Chart === 'undefined') {
+        console.error('Chart.js is not available');
+        ctx.parentElement.innerHTML = '<p class="no-data">خطا در بارگذاری کتابخانه نمودار</p>';
+        return;
+    }
 
     const treatmentData = calculateTreatmentProfitability();
     
@@ -324,7 +357,8 @@ function renderTreatmentProfitabilityChart() {
         profitabilityColors[t.profitability] || '#6c757d'
     );
 
-    treatmentProfitabilityChart = new Chart(ctx, {
+    try {
+        treatmentProfitabilityChart = new Chart(ctx, {
         type: 'bar',
         data: {
             labels: labels,
@@ -364,12 +398,25 @@ function renderTreatmentProfitabilityChart() {
             }
         }
     });
+    } catch (error) {
+        console.error('Error rendering treatment profitability chart:', error);
+        ctx.parentElement.innerHTML = '<p class="no-data">خطا در نمایش نمودار: ' + error.message + '</p>';
+    }
 }
 
 // Render daily registrations line chart
 function renderDailyRegistrationsChart() {
     const ctx = document.getElementById('dailyRegistrationsChart');
-    if (!ctx) return;
+    if (!ctx) {
+        console.error('Daily registrations chart canvas not found');
+        return;
+    }
+
+    if (typeof Chart === 'undefined') {
+        console.error('Chart.js is not available');
+        ctx.parentElement.innerHTML = '<p class="no-data">خطا در بارگذاری کتابخانه نمودار</p>';
+        return;
+    }
 
     const dailyData = calculateDailyRegistrations();
     
@@ -383,7 +430,8 @@ function renderDailyRegistrationsChart() {
         dailyRegistrationsChart.destroy();
     }
 
-    dailyRegistrationsChart = new Chart(ctx, {
+    try {
+        dailyRegistrationsChart = new Chart(ctx, {
         type: 'line',
         data: {
             labels: dailyData.labels,
@@ -434,6 +482,10 @@ function renderDailyRegistrationsChart() {
             }
         }
     });
+    } catch (error) {
+        console.error('Error rendering daily registrations chart:', error);
+        ctx.parentElement.innerHTML = '<p class="no-data">خطا در نمایش نمودار: ' + error.message + '</p>';
+    }
 }
 
 // Render summary cards
@@ -498,12 +550,31 @@ function renderTreatmentsTable() {
 
 // Render entire dashboard
 function renderDashboard() {
-    renderSummaryCards();
-    renderPaymentTypesChart();
-    renderPaymentTypesTable();
-    renderTreatmentProfitabilityChart();
-    renderTreatmentsTable();
-    renderDailyRegistrationsChart();
+    try {
+        console.log('Rendering dashboard...');
+        renderSummaryCards();
+        console.log('Summary cards rendered');
+        
+        renderPaymentTypesChart();
+        console.log('Payment types chart rendered');
+        
+        renderPaymentTypesTable();
+        console.log('Payment types table rendered');
+        
+        renderTreatmentProfitabilityChart();
+        console.log('Treatment profitability chart rendered');
+        
+        renderTreatmentsTable();
+        console.log('Treatments table rendered');
+        
+        renderDailyRegistrationsChart();
+        console.log('Daily registrations chart rendered');
+        
+        console.log('Dashboard rendered successfully');
+    } catch (error) {
+        console.error('Error rendering dashboard:', error);
+        alert('خطا در نمایش داشبورد: ' + error.message);
+    }
 }
 
 // Export to CSV

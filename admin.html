@@ -6,6 +6,15 @@
     <title>پنل مدیریت - آتیه</title>
     <link rel="stylesheet" href="admin.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+        // Wait for Chart.js to load before initializing
+        window.addEventListener('load', function() {
+            if (typeof Chart === 'undefined') {
+                console.error('Chart.js failed to load');
+                document.body.innerHTML = '<div style="padding: 50px; text-align: center; color: red; font-family: Arial;"><h1>خطا در بارگذاری</h1><p>کتابخانه Chart.js بارگذاری نشد. لطفاً اتصال اینترنت خود را بررسی کنید.</p><button onclick="location.reload()" style="padding: 10px 20px; margin-top: 20px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer;">تلاش مجدد</button></div>';
+            }
+        });
+    </script>
 </head>
 <body>
     <div class="admin-container">
