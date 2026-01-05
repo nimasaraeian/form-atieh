@@ -1,0 +1,43 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  @apply bg-cloud text-slate-900 antialiased;
+}
+
+a {
+  @apply text-primary-600 hover:text-primary-700;
+}
+
+.card {
+  @apply bg-white rounded-2xl shadow-card border border-slate-100;
+}
+
+.card-title {
+  @apply text-base font-semibold text-slate-900;
+}
+
+.muted {
+  @apply text-sm text-slate-500;
+}
+
+@media print {
+  body {
+    background: white;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .card {
+    box-shadow: none;
+    border-color: #e2e8f0;
+  }
+}
+
